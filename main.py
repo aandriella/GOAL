@@ -147,18 +147,16 @@ def main():
 
     #################GENERATE SIMULATION################################
     # SIMULATION PARAMS
-    epochs = 10
+    epochs = 20
     scaling_factor = 1
     # initialise the agent
-    bn_model_caregiver_assistance = bnlearn.import_DAG('/home/pal/Documents/Framework/bn_generative_model/bn_agent_model/agent_assistive_model.bif')
-    bn_model_caregiver_feedback = None#bnlearn.import_DAG('/home/pal/Documents/Framework/bn_generative_model/bn_agent_model/agent_feedback_model.bif')
-    bn_model_user_action = bnlearn.import_DAG('/home/pal/Documents/Framework/bn_generative_model/bn_persona_model/user_action_model.bif')
-    bn_model_user_react_time = bnlearn.import_DAG('/home/pal/Documents/Framework/bn_generative_model/bn_persona_model/user_react_time_model.bif')
+    bn_model_user_action_filename = '/home/pal/Documents/Framework/bn_generative_model/bn_persona_model/persona_model_test.bif'
+    bn_model_user_action = bnlearn.import_DAG(bn_model_user_action_filename)
 
-    # initialise memory, attention and reactivity variables
-    persona_memory = 0;
-    persona_attention = 0;
-    persona_reactivity = 1;
+    #setup by the caregiver
+    user_pref_assistance = 2
+    agent_behaviour = "challenge"
+
 
     # define state space struct for the irl algorithm
     episode_instance = Episode()
@@ -179,25 +177,22 @@ def main():
     terminal_state = [(Game_State.counter.value, i, user_action[j]) for i in range(1, Attempt.counter.value + 1) for j in
                       range(len(user_action))]
     initial_state = (1, 1, 0)
+    agent_policy = [0 for s in state_space]
 
     #1. RUN THE SIMULATION WITH THE PARAMS SET BY THE CAREGIVER
-
-
     game_performance_per_episode, react_time_per_episode, agent_assistance_per_episode, agent_feedback_per_episode, episodes_list = \
-        Sim.simulation(bn_model_user_action=bn_model_user_action, var_user_action_target_action=['user_action'],
-                       bn_model_user_react_time=bn_model_user_react_time,
-                       var_user_react_time_target_action=['user_react_time'],
-                       user_memory_name="memory", user_memory_value=persona_memory,
-                       user_attention_name="attention", user_attention_value=persona_attention,
-                       user_reactivity_name="reactivity", user_reactivity_value=persona_reactivity,
-                       task_progress_name="game_state", game_attempt_name="attempt",
-                       agent_assistance_name="agent_assistance", agent_feedback_name="agent_feedback",
-                       bn_model_agent_assistance=bn_model_caregiver_assistance,
-                       var_agent_assistance_target_action=["agent_assistance"],
-                       bn_model_agent_feedback=bn_model_caregiver_feedback, var_agent_feedback_target_action=["agent_feedback"],
-                       agent_policy=None,
-                       state_space=states_space_list, action_space=action_space_list,
-                       epochs=epochs, task_complexity=5, max_attempt_per_object=4)
+    Sim.simulation(bn_model_user_action=bn_model_user_action,
+                   var_user_action_target_action=['user_action'],
+                   game_state_bn_name="game_state",
+                   attempt_bn_name="attempt",
+                   agent_assistance_bn_name="agent_assistance",
+                   agent_feedback_bn_name="agent_feedback",
+                   user_pref_assistance=user_pref_assistance,
+                   agent_behaviour=agent_behaviour,
+                   agent_policy=[],
+                   state_space=states_space_list,
+                   action_space=action_space_list,
+                   epochs=epochs, task_complexity=5, max_attempt_per_object=4, alpha_learning=0.1)
 
     #2. GIVEN THE EPISODES ESTIMATE R(S) and PI(S)
 
@@ -207,9 +202,9 @@ def main():
     if not os.path.exists(full_path):
         os.mkdir(full_path)
 
-    plot_game_performance_path = "SIM_game_performance_"+"epoch_" + str(epochs) + "_persona_memory_" + str(persona_memory) + "_persona_attention_" + str(persona_attention) + "_persona_reactivity_" + str(persona_reactivity) + ".jpg"
-    plot_agent_assistance_path = "SIM_agent_assistance_"+"epoch_"+str(epochs)+"_persona_memory_"+str(persona_memory)+"_persona_attention_"+str(persona_attention)+"_persona_reactivity_"+str(persona_reactivity)+".jpg"
-    plot_agent_feedback_path = "SIM_agent_feedback_"+"epoch_"+str(epochs)+"_persona_memory_"+str(persona_memory)+"_persona_attention_"+str(persona_attention)+"_persona_reactivity_"+str(persona_reactivity)+".jpg"
+    plot_game_performance_path = "SIM_game_performance_"+"epoch_" + str(epochs) + ".jpg"
+    plot_agent_assistance_path = "SIM_agent_assistance_"+"epoch_"+str(epochs)+".jpg"
+    plot_agent_feedback_path = "SIM_agent_feedback_"+"epoch_"+str(epochs)+".jpg"
 
     utils.plot2D_game_performance(full_path +plot_game_performance_path, epochs, scaling_factor, game_performance_per_episode)
     utils.plot2D_assistance(full_path + plot_agent_assistance_path, epochs, scaling_factor, agent_assistance_per_episode)
@@ -227,7 +222,7 @@ def main():
 
     #R(s) and pi(s) generated from the first sim
     maxent_R_sim = maxent(world, terminals, episodes_list)
-    maxent_V_sim, maxent_P_sim = vi.value_iteration(world.p_transition, maxent_R_sim, gamma=0.9, error=1e-3, deterministic=True)
+    maxent_V_sim, maxent_P_sim = vi.value_iteration(world.p_transition, maxent_R_sim, gamma=0.9, error=1e-3, deterministic=False)
     plt.figure(figsize=(12, 4), num="maxent_rew")
     sns.heatmap(np.reshape(maxent_R_sim, (4, 12)), cmap="Spectral", annot=True, cbar=False)
     plt.savefig(full_path + "sim_maxent_R.jpg")
@@ -240,43 +235,31 @@ def main():
     #####################################################################################
 
     #3.WE GOT SOME REAL DATA UPDATE THE BELIEF OF THE BN
-    log_directory = "/home/pal/carf_ws/src/carf/caregiver_in_the_loop/log/1/0"
+    log_directory = "/home/pal/Documents/Framework/bn_generative_model/bn_persona_model/cognitive_game.csv"
+
     if os.path.exists(log_directory):
-        bn_functions.update_episodes_batch(bn_model_user_action, bn_model_user_react_time,
-                                           bn_model_caregiver_assistance,
-                                           bn_model_caregiver_feedback, folder_filename=log_directory,
-                                           with_caregiver=True)
+        bn_model_user_action_from_data = Sim.build_model_from_data(csv_filename=log_directory, dag_filename=bn_model_user_action_filename, dag_model=bn_model_user_action)
     else:
         assert ("You're not using the user information")
         question = input("Are you sure you don't want to load user's belief information?")
 
-
     game_performance_per_episode, react_time_per_episode, agent_assistance_per_episode, agent_feedback_per_episode, episodes_list = \
-        Sim.simulation(bn_model_user_action=bn_model_user_action, var_user_action_target_action=['user_action'],
-                       bn_model_user_react_time=bn_model_user_react_time,
-                       var_user_react_time_target_action=['user_react_time'],
-                       user_memory_name="memory", user_memory_value=persona_memory,
-                       user_attention_name="attention", user_attention_value=persona_attention,
-                       user_reactivity_name="reactivity", user_reactivity_value=persona_reactivity,
-                       task_progress_name="game_state", game_attempt_name="attempt",
-                       agent_assistance_name="agent_assistance", agent_feedback_name="agent_feedback",
-                       bn_model_agent_assistance=bn_model_caregiver_assistance,
-                       var_agent_assistance_target_action=["agent_assistance"],
-                       bn_model_agent_feedback=bn_model_caregiver_feedback,
-                       var_agent_feedback_target_action=["agent_feedback"],
-                       agent_policy=None,
-                       state_space=states_space_list, action_space=action_space_list,
-                       epochs=epochs, task_complexity=5, max_attempt_per_object=4)
+        Sim.simulation(bn_model_user_action=bn_model_user_action,
+                       var_user_action_target_action=['user_action'],
+                       game_state_bn_name="game_state",
+                       attempt_bn_name="attempt",
+                       agent_assistance_bn_name="agent_assistance",
+                       agent_feedback_bn_name="agent_feedback",
+                       user_pref_assistance=user_pref_assistance,
+                       agent_behaviour=agent_behaviour,
+                       agent_policy = maxent_P_sim,
+                       state_space=states_space_list,
+                       action_space=action_space_list,
+                       epochs=epochs, task_complexity=5, max_attempt_per_object=4, alpha_learning=0.1)
 
-    plot_game_performance_path = "REAL_SIM_game_performance_" + "epoch_" + str(epochs) + "_persona_memory_" + str(
-        persona_memory) + "persona_attention_" + str(persona_attention) + "_persona_reactivity_" + str(
-        persona_reactivity) + ".jpg"
-    plot_agent_assistance_path = "REAL_SIM_agent_assistance_" + "epoch_" + str(epochs) + "_persona_memory_" + str(
-        persona_memory) + "_persona_attention_" + str(persona_attention) + "_persona_reactivity_" + str(
-        persona_reactivity) + ".jpg"
-    plot_agent_feedback_path = "REAL_SIM_agent_feedback_" + "epoch_" + str(epochs) + "_persona_memory_" + str(
-        persona_memory) + "_persona_attention_" + str(persona_attention) + "_persona_reactivity_" + str(
-        persona_reactivity) + ".jpg"
+    plot_game_performance_path = "REAL_SIM_game_performance_" + "epoch_" + str(epochs) + ".jpg"
+    plot_agent_assistance_path = "REAL_SIM_agent_assistance_" + "epoch_" + str(epochs) + ".jpg"
+    plot_agent_feedback_path = "REAL_SIM_agent_feedback_" + "epoch_" + str(epochs) + ".jpg"
 
     utils.plot2D_game_performance(full_path + plot_game_performance_path, epochs, scaling_factor, game_performance_per_episode)
     utils.plot2D_assistance(full_path + plot_agent_assistance_path, epochs, scaling_factor, agent_assistance_per_episode)
