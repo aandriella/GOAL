@@ -16,6 +16,7 @@ import sys
 import random
 import numpy as np
 import seaborn as sns
+import pandas as pd
 import matplotlib.pyplot as plt
 import itertools
 import os
@@ -138,12 +139,63 @@ def maxent(world, terminal, trajectories):
 
     return reward
 
+def merge_user_log(folder_pathname, user_id, with_feedback, column_to_remove):
+    absolute_path = folder_pathname+"/"+str(+user_id)+"/"+str(with_feedback)
+    df = pd.DataFrame()
+    if len(absolute_path)==0:
+        print("Error no folders in path ", absolute_path)
+    # else:
+    #     df = pd.read_csv(absolute_path+"/1/bn_variables.csv")
+
+    if column_to_remove!=None:
+        df = df.drop(column_to_remove, axis=1)
+    #df_removed = df.drop(["user_memory", "user_reactivity"], axis=1)
+    sessions_directory = os.listdir(absolute_path)
+    episode_length = [0]*(len(sessions_directory)+1)
+
+    for i in range(len(sessions_directory)):
+        file_folder = absolute_path+"/"+sessions_directory[i]
+        print("File folder: ", file_folder)
+        files = os.listdir(file_folder)
+
+        for k in range(len(files)):
+            if files[k] == "bn_variables.csv":
+                df_ = pd.read_csv(file_folder+"/"+files[k])
+                df = df.append(df_)
+                episode_length[i+1] = episode_length[i]+(df_.shape[0]-1)+1
+    df.to_csv(absolute_path + "/summary_bn_variables.csv", index=False)
+    return df, episode_length
+
+def compute_agent_policy(folder_pathname, user_id, with_feedback, state_space, action_space, episode_length):
+    #read columns of interest (game_state, attempt, user_prev_action)
+    ep = Episode()
+    df = pd.read_csv(folder_pathname+"/"+str(user_id)+"/"+str(with_feedback)+"/summary_bn_variables.csv")
+    agent_policy_counter = [[0 for  a in action_space] for s in state_space]
+    agent_policy_prob = [[0 for  a in action_space] for s in state_space]
+    row_t_0 = 0
+    for index, row in df.iterrows():
+        if index == 0 or index in episode_length:
+            state_point = (row['game_state'], row['attempt'], 0)
+            state_index = ep.state_from_point_to_index(state_space, state_point)
+            action_point = (row['agent_feedback'], row['agent_assistance'])
+            action_index = ep.state_from_point_to_index(action_space, action_point)
+            agent_policy_counter[state_index][action_index] += 1
+            row_t_0 = row['user_action']
+        else:
+            state_point = (row['game_state'], row['attempt'], row_t_0)
+            state_index = ep.state_from_point_to_index(state_space, state_point)
+            action_point = (row['agent_feedback'], row['agent_assistance'])
+            action_index = ep.state_from_point_to_index(action_space, action_point)
+            agent_policy_counter[state_index][action_index] += 1
+            row_t_0 = row['user_action']
+    for s in range(len(state_space)):
+        agent_policy_prob[s] = list(map(lambda x:x/(sum(agent_policy_counter[s])+0.001), agent_policy_counter[s]))
+
+    return agent_policy_prob
 
 def main():
-    # common style arguments for plotting
-    style = {
-        'border': {'color': 'red', 'linewidth': 0.5},
-    }
+    df, episode_length = merge_user_log(folder_pathname="/home/pal/Documents/Framework/GenerativeMutualShapingRL/data",
+                   user_id=1, with_feedback=True, column_to_remove=None)
 
     #################GENERATE SIMULATION################################
     # SIMULATION PARAMS
@@ -157,7 +209,6 @@ def main():
     user_pref_assistance = 2
     agent_behaviour = "challenge"
 
-
     # define state space struct for the irl algorithm
     episode_instance = Episode()
     # DEFINITION OF THE MDP
@@ -165,7 +216,7 @@ def main():
     attempt = [i for i in range(1, Attempt.counter.value + 1)]
     # +1 (3,_,_) absorbing state
     game_state = [i for i in range(0, Game_State.counter.value + 1)]
-    user_action = [i for i in range(-1, User_Action.counter.value - 1)]
+    user_action = [i for i in range(0, User_Action.counter.value)]
     state_space = (game_state, attempt, user_action)
     states_space_list = list(itertools.product(*state_space))
     state_space_index = [episode_instance.state_from_point_to_index(states_space_list, s) for s in states_space_list]
@@ -178,6 +229,11 @@ def main():
                       range(len(user_action))]
     initial_state = (1, 1, 0)
     agent_policy = [0 for s in state_space]
+
+    compute_agent_policy(folder_pathname="/home/pal/Documents/Framework/GenerativeMutualShapingRL/data/",
+                         user_id=1, with_feedback=True, state_space=states_space_list,
+                         action_space=action_space_list, episode_length=episode_length)
+
 
     #1. RUN THE SIMULATION WITH THE PARAMS SET BY THE CAREGIVER
     game_performance_per_episode, react_time_per_episode, agent_assistance_per_episode, agent_feedback_per_episode, episodes_list = \
