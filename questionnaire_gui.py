@@ -337,8 +337,11 @@ class GUI():
         Button(self.frame4, text="OK", command=self.get_value_ass_att).grid(row=18+row_att3)
 
         self.notebook.pack()
-        Label(self.root, text="Total:").pack()
+        #Label(self.root, text="Total:").pack()
         #Label(self.root, textvariable=total).pack()
+
+    def generate_bn_files(self):
+
 
     def save(self):
         print(":",self.id.get())
@@ -396,74 +399,6 @@ class GUI():
         print(":", self.selected_value_ass_5_att_3.get())
         print(":", self.selected_value_ass_5_att_4.get())
 
-    def get_value_ass_1_att_1(self):
-        pass
-
-    def get_value_ass_2_att_1(self):
-        pass
-
-    def get_value_ass_3_att_1(self):
-        pass
-
-    def get_value_ass_4_att_1(self):
-        pass
-
-    def get_value_ass_5_att_1(self):
-        pass
-    ################################
-    def get_value_ass_0_att_2(self):
-        pass
-
-    def get_value_ass_1_att_2(self):
-        pass
-
-    def get_value_ass_2_att_2(self):
-        pass
-
-    def get_value_ass_3_att_2(self):
-        pass
-
-    def get_value_ass_4_att_2(self):
-        pass
-
-    def get_value_ass_5_att_2(self):
-        pass
-    ################################
-    def get_value_ass_0_att_3(self):
-        pass
-
-    def get_value_ass_1_att_3(self):
-        pass
-
-    def get_value_ass_2_att_3(self):
-        pass
-
-    def get_value_ass_3_att_3(self):
-        pass
-
-    def get_value_ass_4_att_3(self):
-        pass
-
-    def get_value_ass_5_att_3(self):
-        pass
-    #################################
-    def get_value_ass_0_att_4(self):
-        pass
-
-    def get_value_ass_1_att_4(self):
-        pass
-
-    def get_value_ass_2_att_4(self):
-        pass
-
-    def get_value_ass_3_att_4(self):
-        pass
-
-    def get_value_ass_4_att_4(self):
-        pass
-
-    def get_value_ass_5_att_4(self):
-        pass
     #################################
 
 

@@ -247,9 +247,9 @@ def main():
     #################GENERATE SIMULATION################################
     parser = argparse.ArgumentParser()
     parser.add_argument('--bn_user_model_filename', '--bn_user_model', type=str,help="file path of the user bn model",
-                        default="/home/pal/Documents/Framework/bn_generative_model/bn_persona_model/persona_model.bif")
+                        default="/home/pal/Documents/Framework/bn_generative_model/bn_persona_model/persona_test.bif")
     parser.add_argument('--bn_agent_model_filename', '--bn_agent_model', type=str,help="file path of the agent bn model",
-                        default="/home/pal/Documents/Framework/bn_generative_model/bn_agent_model/agent_assistive_model.bif")
+                        default="/home/pal/Documents/Framework/bn_generative_model/bn_agent_model/agent_test.bif")
     parser.add_argument('--epoch', '--epoch', type=int,help="number of epochs in the simulation", default=200)
     parser.add_argument('--run', '--run', type=int, help="number of runs in the simulation", default=50)
     parser.add_argument('--output_policy_filename', '--p', type=str,help="output policy from the simulation",
