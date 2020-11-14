@@ -1,15 +1,21 @@
 import random
-#attempt | user_action
+import pandas as pd
+import os
+import argparse
 from bn_variables import User_Action, Game_State, Attempt, Agent_Assistance
 
 
 class Therapist_BN_Model():
-    def __init__(self, bn_model_folder, user_model_template, agent_model_template, user_id, with_feedback):
+    def __init__(self, bn_model_template_folder, user_model_template, agent_model_template, bn_model_output, user_id, with_feedback):
         self.bn_model_folder = bn_model_folder
-        self.user_model_template = bn_model_folder+"/"+user_model_template
-        self.agent_model_template = bn_model_folder+"/"+agent_model_template
-        self.user_model_filename = bn_model_folder+"/"+"user_model_id_"+str(user_id)+"_"+str(with_feedback)+".bif"
-        self.agent_model_filename = bn_model_folder+"/"+"agent_model_id_"+str(user_id)+"_"+str(with_feedback)+".bif"
+        self.user_model_template = bn_model_template_folder+"/"+user_model_template
+        self.agent_model_template = bn_model_template_folder+"/"+agent_model_template
+        if not os.path.exists(bn_model_output+"/"+str(user_id)):
+            os.mkdir(bn_model_output+"/"+str(user_id))
+        if not os.path.exists(bn_model_output+"/"+str(user_id)+ "/" + str(with_feedback)):
+            os.mkdir(bn_model_output+"/"+str(user_id)+"/"+str(with_feedback))
+        self.user_model_filename = bn_model_output+"/"+str(user_id)+"/"+str(with_feedback)+"/user_model.bif"
+        self.agent_model_filename = bn_model_output+"/"+str(user_id)+"/"+str(with_feedback)+"/agent_model.bif"
         self.user_model = None
         self.agent_model = None
         self.attempt_preferences = [[0 for i in range(Attempt.counter.value)] for j in
@@ -106,32 +112,82 @@ class Therapist_BN_Model():
                 it += 1
         return self.agent_assistance_preferences_on_attempt_game
 
+    def read_therapist_data(self, therapist_questionnaire_filename, user_id):
+        n_attempt = 4
+        n_game_state = 3
+        n_assistance = 6
+        n_user_action = 3
+        attempt_given_user = [0 for i in range(n_attempt)]
+        game_state_given_user = [0 for i in range(n_game_state)]
+        user_given_assistance = [0 for i in range(n_assistance)]
+        assistance_given_attempt_game = [[ 0 for j in range(n_assistance)]for i in range(n_attempt)]
+        #from 5 to 7 game_state | user_action
+        #from 8 to 13 user_action | agent_assistance
+        #from 14 to 37 where every 6 which to attempt
+        data = pd.read_csv(therapist_questionnaire_filename)
+        patient_info = (data.loc[data['User_ID'] == user_id])
+        print("attempt|user_action:",patient_info.values[0][1:n_attempt+1])
+        print("game_state|user_action:", patient_info.values[0][n_attempt+1:n_attempt+n_game_state+1])
+        print("user_action|agent_assistance:", patient_info.values[0][n_attempt+n_game_state+1:n_attempt+n_game_state+n_assistance+1])
+        print("agent_assistance|attempt,game_state:", patient_info.values[0][n_attempt+n_game_state+n_assistance+1:n_attempt+n_game_state+n_assistance+1+(n_assistance*n_attempt)])
+
+        attempt_given_user = patient_info.values[0][1:n_attempt+1]
+        game_given_user = patient_info.values[0][n_attempt+1:n_attempt+n_game_state+1]
+        user_given_assistance = patient_info.values[0][n_attempt+n_game_state+1:n_attempt+n_game_state+n_assistance+1]
+        assistance_given_attempt_game_in_row = patient_info.values[0][n_attempt+n_game_state+n_assistance+1:n_attempt+n_game_state+n_assistance+1+(n_assistance*n_attempt)]
+        for i in range(n_attempt):
+            for j in range(n_assistance):
+                assistance_given_attempt_game[i][j] = assistance_given_attempt_game_in_row[(i*n_assistance)+j]
+        print("agent_assistance|attempt,game_state:", assistance_given_attempt_game)
+
+        return attempt_given_user, game_given_user, user_given_assistance, assistance_given_attempt_game
 
 
-bn_model_folder = "/home/pal/Documents/Framework/bn_generative_model/bn_models"
-user_model_filename = "persona_test.bif"#provided by the gui
-user_model_template = "persona_model_template.bif"
-agent_model_filename = "agent_test.bif"
-agent_model_template = "agent_model_template.bif"#provided by the gui
+parser = argparse.ArgumentParser()
+parser.add_argument('--bn_template', '--bn_model_folder', type=str,
+                    help="folder in which all the user and the agent models are stored ",
+                    default="/home/pal/Documents/Framework/bn_generative_model/bn_models_template")
+parser.add_argument('--bn_user_template', '--bn_user_model', type=str, help="template name of  user bn model",
+                    default="persona_model_template.bif")
+parser.add_argument('--bn_agent_template', '--bn_agent_model', type=str, help="template name of  agent bn model",
+                    default="agent_model_template.bif")
+parser.add_argument('--bn_models_output', '--bn_models_output', type=str,
+                    help="folder in which the bn model are saved",
+                    default="/home/pal/Documents/Framework/GenerativeMutualShapingRL/BN_Models")
+parser.add_argument('--therapist_knowledge', '--therapist_knowledge', type=str,
+                    help="csv file of the questionnaire filled by the therapist",
+                    default="/home/pal/Documents/Framework/GenerativeMutualShapingRL/therapist_questionnaire/therapist_questionnaire.csv")
+parser.add_argument('--user_id', '--id', type=int, help="user id", required=True)
+parser.add_argument('--with_feedback', '--f', type=eval, choices=[True, False], help="offering sociable", required=True)
 
+args = parser.parse_args()
+user_id = args.user_id
+with_feedback = args.with_feedback
+bn_model_folder = args.bn_template
+user_model_template = args.bn_user_template#"persona_model_template.bif"
+agent_model_template = args.bn_agent_template#"agent_model_template.bif"#provided by the gui
+bn_model_output = args.bn_models_output#"/home/pal/Documents/Framework/GenerativeMutualShapingRL/BN_Models"
+therapist_questionnaire_filename = args.therapist_knowledge#"/home/pal/Documents/Framework/GenerativeMutualShapingRL/therapist_questionnaire/therapist_questionnaire.csv"
 
+bn_models = Therapist_BN_Model(bn_model_template_folder=bn_model_folder, user_model_template=user_model_template,
+                               agent_model_template=agent_model_template, bn_model_output=bn_model_output, user_id=str(user_id), with_feedback=with_feedback)
 
-bn_models = Therapist_BN_Model(bn_model_folder=bn_model_folder, user_model_template=user_model_template,
-                               agent_model_template=agent_model_template, user_id="1", with_feedback=True)
-user_action = [0, 1, 2]
-attempt = [0, 1, 2, 3]
-game = [0, 1, 2]
-agent_assistance = [0, 1,2 ,3 ,4 ,5]
+attempt_given_user, game_given_user, user_given_assistance, assistance_given_attempt_game = bn_models.read_therapist_data(therapist_questionnaire_filename=therapist_questionnaire_filename, user_id=user_id)
+
+user_action = [i for i in range(User_Action.counter.value)]
+attempt = [i for i  in range (Attempt.counter.value)]
+game = [i for i in range(Game_State.counter.value)]
+agent_assistance = [i for i in range(Agent_Assistance.counter.value)]
 max_value_for_user = 15
 max_value_for_assistance = 30
 
-attempt_preferences_for_correct_move = [2, 3, 4, 4]
-assistance_preferences_for_correct_move = [2, 3, 3, 4, 5, 5]
-game_preferences_for_correct_move = [2, 3, 4]
-assistance_preferences_for_correct_move_game_attempt = [[4, 5, 2, 1, 1, 1],
-                          [1, 3, 5, 3, 1, 1],
-                          [1, 2, 2, 5, 4, 1],
-                          [1, 1, 2, 5, 4, 4]]
+attempt_preferences_for_correct_move = attempt_given_user#[2, 3, 4, 4]
+assistance_preferences_for_correct_move = user_given_assistance#[2, 3, 3, 4, 5, 5]
+game_preferences_for_correct_move = game_given_user#[2, 3, 4]
+assistance_preferences_for_correct_move_game_attempt = assistance_given_attempt_game#[[4, 5, 2, 1, 1, 1],
+                          # [1, 3, 5, 3, 1, 1],
+                          # [1, 2, 2, 5, 4, 1],
+                          # [1, 1, 2, 5, 4, 4]]
 
 user_action_vars = ["(correct)", "(wrong)", "(timeout)"]
 agent_assistance_vars = ["(lev_0)", "(lev_1)", "(lev_2)", "(lev_3)", "(lev_4)", "(lev_5)"]
@@ -147,8 +203,6 @@ bn_models.create_template(filename_out=bn_models.agent_model_filename, filename_
 
 
 #write all the values on a bif file
-
-
 user_model = open(bn_models.user_model_filename, "a+")
 agent_model = open(bn_models.agent_model_filename, "a+")
 
