@@ -341,7 +341,7 @@ class GUI():
         #Label(self.root, textvariable=total).pack()
 
     def generate_bn_files(self):
-
+        pass
 
     def save(self):
         print(":",self.id.get())
