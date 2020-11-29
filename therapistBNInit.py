@@ -165,8 +165,8 @@ parser.add_argument('--with_feedback', '--f', type=eval, choices=[True, False], 
 args = parser.parse_args()
 
 run_batch = True
-from_id = 1
-to_id = 10
+from_id = 11
+to_id = 18
 
 if run_batch == False:
     user_id = args.user_id
@@ -302,13 +302,10 @@ else:
             max_value_for_user = 15
             max_value_for_assistance = 30
 
-            attempt_preferences_for_correct_move = attempt_given_user#[2, 3, 4, 4]
-            assistance_preferences_for_correct_move = user_given_assistance#[2, 3, 3, 4, 5, 5]
-            game_preferences_for_correct_move = game_given_user#[2, 3, 4]
-            assistance_preferences_for_correct_move_game_attempt = assistance_given_attempt_game#[[4, 5, 2, 1, 1, 1],
-                                      # [1, 3, 5, 3, 1, 1],
-                                      # [1, 2, 2, 5, 4, 1],
-                                      # [1, 1, 2, 5, 4, 4]]
+            attempt_preferences_for_correct_move = attempt_given_user
+            assistance_preferences_for_correct_move = user_given_assistance
+            game_preferences_for_correct_move = game_given_user
+            assistance_preferences_for_correct_move_game_attempt = assistance_given_attempt_game
 
             user_action_vars = ["(correct)", "(wrong)", "(timeout)"]
             agent_assistance_vars = ["(lev_0)", "(lev_1)", "(lev_2)", "(lev_3)", "(lev_4)", "(lev_5)"]
@@ -358,6 +355,7 @@ else:
                                  str(bn_models.assistance_preferences[elem][1])+","+
                                  str(bn_models.assistance_preferences[elem][2])+"; \n")
             user_model.write("}")
+            user_model.close()
 
             agent_model.write("probability (agent_assistance | game_state, attempt) { \n")
             bn_models.agent_assistance_preferences_on_attempt_game = bn_models.get_agent_assistance_given_attempt_and_game_state(assistance_preferences_for_correct_move_game_attempt)
@@ -377,6 +375,8 @@ else:
                                       )
                     it += 1
             agent_model.write("}")
+            agent_model.close()
+
 
 
             print(bn_models.attempt_preferences)
