@@ -266,6 +266,7 @@ def main():
     parser.add_argument('--user_id', '--id', type=int,help="user id", required=True)
     parser.add_argument('--with_feedback', '--f', type=eval, choices=[True, False], help="offering sociable", required=True)
     parser.add_argument('--session', '--s', type=int, help="session of the agent-human interaction", required=True)
+    parser.add_argument('--agent_objective', '--objective', type=str, help="challenge, help or neutral", required=True)
 
     args = parser.parse_args()
 
@@ -276,6 +277,7 @@ def main():
     session = args.session
     epochs = args.epoch
     runs = args.run
+    agent_objective = args.agent_objective
     # initialise the agent
     bn_user_model_filename = args.bn_model_folder  +"/"+str(user_id)+"/"+str(with_feedback)+"/user_model.bif"
     bn_agent_model_filename = args.bn_model_folder+"/"+str(user_id)+"/"+str(with_feedback)+"/agent_model.bif"
@@ -362,6 +364,7 @@ def main():
         assert ("You're not using the user information")
         question = input("Are you sure you don't want to load user's belief information?")
 
+
     game_performance_per_episode, agent_assistance_per_episode, episodes = \
         Sim.simulation(bn_model_user_action=bn_model_user_action_from_data_and_therapist,
                        bn_model_agent_behaviour = bn_model_agent_behaviour_from_data_and_therapist,
@@ -371,13 +374,12 @@ def main():
                        attempt_bn_name="attempt",
                        agent_assistance_bn_name="agent_assistance",
                        agent_policy = [],
+                       agent_objective=agent_objective,
                        state_space=states_space_list,
-                       action_space=action_space_list,
                        epoch=epochs,
                        run=runs,
                        task_complexity=5,
-                       max_attempt_per_object=4,
-                       alpha_learning=0.1)
+                       max_attempt_per_object=4)
 
     plot_game_performance_path = output_folder_data_path+"/game_performance_" + "epoch_" + str(epochs) + ".jpg"
     plot_agent_assistance_path = output_folder_data_path+"/agent_assistance_" + "epoch_" + str(epochs) + ".jpg"
