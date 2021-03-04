@@ -33,19 +33,19 @@ probability ( user_action ) {
 }
 probability (game_state | user_action)  { 
 (correct)	0.2857142857142857,0.35714285714285715,0.35714285714285715; 
-(wrong)	1.0,0.0,0.0; 
-(timeout)	1.0,0.0,0.0; 
+(wrong)	0.6,0.2,0.2;
+(timeout)	0.8,0.1,0.1;
 }
-probability (attempt | user_action)  { 
-(correct)	0.21052631578947367,0.2631578947368421,0.2631578947368421,0.2631578947368421; 
-(wrong)	1.0,0.0,0.0,0.0; 
-(timeout)	1.0,0.0,0.0,0.0; 
+probability (attempt | user_action)  {
+(correct)	0.21052631578947367,0.2631578947368421,0.2631578947368421,0.2631578947368421;
+(wrong)	0.6,0.2,0.1,0.1;
+(timeout)	0.6,0.2,0.1,0.1;
 }
-probability (user_action | agent_assistance) { 
-(lev_0)	0.8,0.1,0.1; 
-(lev_1)	0.8,0.1,0.1; 
-(lev_2)	1.0,0.0,0.0; 
-(lev_3)	1.0,0.0,0.0; 
+probability (user_action | agent_assistance) {
+(lev_0)	0.6,0.3,0.1;
+(lev_1)	0.6,0.3,0.1;
+(lev_2)	0.8,0.1,0.1;
+(lev_3)	0.9,0.1,0.0;
 (lev_4)	1.0,0.0,0.0; 
 (lev_5)	1.0,0.0,0.0; 
 }
