@@ -165,8 +165,8 @@ parser.add_argument('--with_feedback', '--f', type=eval, choices=[True, False], 
 args = parser.parse_args()
 
 run_batch = True
-from_id = 11
-to_id = 18
+from_id = 19
+to_id = 25
 
 if run_batch == False:
     user_id = args.user_id

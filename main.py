@@ -375,6 +375,7 @@ def main():
                        agent_assistance_bn_name="agent_assistance",
                        agent_policy = [],
                        agent_objective=agent_objective,
+                       epsilon=0.3,
                        state_space=states_space_list,
                        epoch=epochs,
                        run=runs,
@@ -385,6 +386,8 @@ def main():
     plot_agent_assistance_path = output_folder_data_path+"/agent_assistance_" + "epoch_" + str(epochs) + ".jpg"
 
     utils.plot2D_game_performance(plot_game_performance_path, epochs, scaling_factor, game_performance_per_episode)
+    #add only to have a larger plot
+    agent_assistance_per_episode.append([0,0,0,0,0,0,0])
     utils.plot2D_assistance(plot_agent_assistance_path, epochs, scaling_factor, agent_assistance_per_episode)
 
     sim_patient_performance_filename = "sim_patient_performance.pkl"
