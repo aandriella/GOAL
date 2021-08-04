@@ -20,7 +20,7 @@
 ### USAGE ###
 
 ``` 
-python main.py --epoch 5 --run 50 --user_id 19 --f True --s 0 --objective neutral
+python main.py --bn_model_folder ($PATH) --output_policy_filename ($PATH) --output_reward_filename ($PATH) --output_value_filename ($PATH) --therapist_patient_interaction_folder ($PATH) --agent_patient_interaction_folder ($PATH) --epoch 5 --run 50 --user_id 19 --f True --s 0 --objective neutral
 ```
 where:
 - bn_model_folder, folder contains the initial bn models of therapist and patient
