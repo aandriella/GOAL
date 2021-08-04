@@ -1,8 +1,0 @@
-user_react_time,game_state,attempt,agent_feedback,user_memory,user_action,agent_assistance,user_reactivity
-2,0,0,0,0,0,0,0
-1,0,0,0,0,0,1,0
-1,1,0,0,0,0,1,0
-0,1,0,0,0,2,0,0
-0,1,1,0,0,0,2,0
-0,2,0,0,0,2,0,0
-1,2,1,0,0,0,1,0
