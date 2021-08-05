@@ -1,13 +1,13 @@
 ### GOAL simulator + Policy generator ### 
 #### STEPS:
-##### - 1: CREATE INITIAL USER COGNITIVE MODEL FROM DATA (human therapist and patient)
-##### - 2: CREATE ROBOT INITIAL POLICY FROM DATA (human therapist) OR UPDATE IT IF SESSION > 0
-##### - 3: RUN THE SIMULATION using the [BN_GenerativeModel](https://github.com/aandriella/BN_GenerativeModel) package
-##### - 4: GENERATE THE NEW EPISODES
-##### - 5: LEARN THE ROBOT REWARD USING MAXIMUM CAUSAL ENTROPY INVERSE REINFORCEMENT LEARNING algorithm proposed Ziebart's thesis (2010) [MaxEntropyIRL](https://github.com/aandriella/MaxEntRL)
-##### - 6: COMPUTE THE POLICY RELATED TO THAT REWARD USING VALUE ITERATION
-##### - 7: RUN A SESSION WITH THE PATIENT
-##### - REPEAT FROM 2
+###### - 1: Create initial user cognitive model from data (human therapist and patient)
+###### - 2: Create robot policy from data (human therapist) or update it if session > 0
+###### - 3: Run the simulation using the [BN_GenerativeModel](https://github.com/aandriella/BN_GenerativeModel) package
+###### - 4: Generate new episodes
+###### - 5: Learn the robot reward using Max Causal Entropy Inverse Reiforcement Learning algorithm proposed Ziebart's thesis (2010) [MaxEntropyIRL](https://github.com/aandriella/MaxEntRL)
+###### - 6: Compute the policy related to that reward using Value Iteration
+###### - 7: Run a session between the robot and the patient
+###### - Repeat from 2
 
 
 #### Package:
